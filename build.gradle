@@ -24,3 +24,6 @@ jar {
         attributes 'Main-Class': 'com.github.euonmyoji.randomimage.Main'
     }
 }
+
+task stage(dependsOn: ['build', 'clean'])
+build.mustRunAfter clean
