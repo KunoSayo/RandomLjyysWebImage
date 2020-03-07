@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Main {
     public static final Scanner SCANNER = new Scanner(System.in);
-    private static final ThreadPoolExecutor executor = new ThreadPoolExecutor(64, 1024, 6, TimeUnit.HOURS,
+    private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(64, 1024, 6, TimeUnit.HOURS,
             new LinkedBlockingQueue<>(4096), r -> new Thread(r, "upload image"), (r, executor1) -> {
         System.out.println("rejected: " + r);
         try {
@@ -34,23 +34,29 @@ public class Main {
     private static volatile boolean running = true;
 
     public static void main(String[] args) throws Exception {
-
         System.setProperty("https.protocols", "TLSv1.2,TLSv1.1");
-        SSLContext sslContext = SSLContext.getInstance("TLSv1");
-        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        keyStore.load(Files.newInputStream(Paths.get("./img.ljyys.ml/img.ljyys.ml.keystore")), "123456".toCharArray());
+        SSLContext sslContext;
+        if (Files.exists(Paths.get("./img.ljyys.ml/img.ljyys.ml.keystore"))) {
+            sslContext = SSLContext.getInstance("TLSv1");
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(Files.newInputStream(Paths.get("./img.ljyys.ml/img.ljyys.ml.keystore")), "123456".toCharArray());
 
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, "123456".toCharArray());
 
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init(keyStore);
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, "123456".toCharArray());
 
-        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
 
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+        } else {
+            sslContext = SSLContext.getDefault();
+        }
         SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
-        System.out.println("port:");
-        int port = SCANNER.nextInt();
+        int port = 80;
+        if (Files.exists(Paths.get("port.txt"))) {
+            port = Integer.parseInt(Files.newBufferedReader(Paths.get("port.txt")).readLine());
+        }
         SSLServerSocket serverSocket = (SSLServerSocket) socketFactory.createServerSocket(port);
         serverSocket.setEnabledProtocols(serverSocket.getSupportedProtocols());
         serverSocket.setEnabledCipherSuites(serverSocket.getSupportedCipherSuites());
@@ -64,7 +70,7 @@ public class Main {
                     String address = socket.getInetAddress().getHostAddress();
                     System.out.println(LocalDateTime.now() + " got socket from " + address);
 
-                    executor.execute(new Request(socket));
+                    EXECUTOR.execute(new Request(socket));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
