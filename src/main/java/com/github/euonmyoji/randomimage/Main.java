@@ -39,7 +39,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         System.setProperty("https.protocols", "TLSv1.2,TLSv1.1");
         ServerSocket serverSocket;
-        int port = 8080;
+        int port = 80;
         if (Files.exists(Paths.get("port.txt"))) {
             port = Integer.parseInt(Files.newBufferedReader(Paths.get("port.txt")).readLine());
         }
