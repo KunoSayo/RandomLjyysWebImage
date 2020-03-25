@@ -39,10 +39,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         System.setProperty("https.protocols", "TLSv1.2,TLSv1.1");
         ServerSocket serverSocket;
-        int port = 80;
-        if (Files.exists(Paths.get("port.txt"))) {
-            port = Integer.parseInt(Files.newBufferedReader(Paths.get("port.txt")).readLine());
-        }
+        int port = Integer.parseInt(System.getProperty("server.port", "8080"));
         if (Files.exists(Paths.get("./img.ljyys.ml/img.ljyys.ml.keystore"))) {
             SSLContext sslContext;
             sslContext = SSLContext.getInstance("TLSv1");
